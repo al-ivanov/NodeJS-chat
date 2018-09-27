@@ -1,0 +1,13 @@
+{
+  "name": "nodechat",
+  "version": "0.1.0",
+  "description": "Chat example",
+  "main": "app.js",
+  "repository": "",
+  "author": "Ivanov Alex",
+  "dependencies": {
+    "express": "latest",
+    "socket.io": "latest",
+    "mysql": "latest"
+  }
+}

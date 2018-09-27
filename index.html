@@ -1,0 +1,201 @@
+<html>
+    <head>
+        <title>Веб чат</title>
+        <style>
+            #contentWrap{
+                display: none;
+            }
+            #chatWrap{
+                float: left;
+            }
+            #chat{
+                position: relative;
+                width: 100%;
+                float:left;
+                min-height:100px;
+                height: 90%;
+                overflow: auto;
+            }
+			
+			#regWrap {
+				display:none;
+			}
+        </style>
+        
+        <script src="https://code.jquery.com/jquery.js"></script>
+        
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+        
+    </head>
+    <body>
+    
+        <div class="container">
+            
+            <div class="input-group" style="width:300px;text-align:center;margin:0 auto;" id="nickWrap">
+                <input id="nickname" class="form-control input-lg" type="text" placeholder="Введите ваше имя">
+				<input id="password" class="form-control input-lg" type="password" placeholder="Введите ваш пароль">
+					<a href='#' id='regLink'>Зарегистрироваться</a><br>
+                    <button class="btn btn-lg btn-primary" type="submit" id="setNick">Войти</button>
+            </div>
+			<div class="input-group" style="width:300px;text-align:center;margin:0 auto;" id="regWrap" style='display:none;'>
+                <input id="regNickname" class="form-control input-lg" type="text" placeholder="Введите ваше имя">
+				<input id="regPassword" class="form-control input-lg" type="password" placeholder="Введите ваш пароль">
+					<a href='#' id='loginLink'>Перейти к авторизоваться</a><br>
+                    <button class="btn btn-lg btn-primary" type="submit" id="regUser">Зарегестрироваться</button>
+            </div>
+            <div class="alert fade in alert-danger alert-dismissable" data-dismiss="alert" id="login-error" style="display:none;">
+                <button type="button" class="close" id="closeAlert">×</button>
+                Имя уже занято
+            </div>
+			
+			<div class="alert fade in alert-danger alert-dismissable" data-dismiss="alert" id="login-incorrect" style="display:none;">
+                <button type="button" class="close" id="closeAlert">×</button>
+                Не верный логин или пароль
+            </div>
+			
+			<div class="alert fade in alert-success" data-dismiss="alert" id="regOk" style="display:none;">
+                <button type="button" class="close" id="closeAlert">×</button>
+                Регистрация прошла успешно. Вы можете приступить к авторизации
+            </div>
+            <div id="contentWrap" class="row" style="height: 70%;">
+                <div class="col-md-2"></div>
+                <div id="chatWrap"  class="col-md-6">
+                    <div class="panel-success">
+                        <div class="panel-heading">Chat</div>
+                        <div id="chat" class="panel-body"></div>
+                    </div>
+                    
+                    <div>
+                        <form id="send-message" class="input-group" style="text-align:center;margin:0 auto;">
+                        <input id="message" class="form-control input-lg" type="text">
+                        <span class="input-group-btn">
+                            <button class="btn btn-lg btn-primary" type="submit">Send</button>
+                        </span>
+                        </form>
+                    </div>
+                    
+                    <!--
+                        <input size="35" id="message"></input>
+                        <input type="submit"></input>
+                    </form>-->
+                </div>
+                
+                
+                
+                <div class="col-md-2">
+                    <div class="panel panel-info">
+                        <div class="panel-heading" id="panel-heading">
+                            Users
+                        </div>
+                        <div id="users" class="panel-body"></div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <script src="socket.io/socket.io.js"></script>
+        <script>
+            jQuery(function($) {
+               var socket = io.connect();
+               var messageForm = $('#send-message');
+               var messageBox = $('#message');
+               var chat = $('#chat');
+               var buttonSend = $('#send');
+               
+               var nickForm = $('#setNick');
+               var nickBox = $('#nickname');
+			   var passBox = $('#password');
+               var users = $('#users');
+               var closeAlert = $('#closeAlert');
+               var loginError = $("#login-error");
+			   var loginIncorrect = $("#login-incorrect");
+			   var regLink = $('#regLink');
+               var loginLink = $("#loginLink");
+			   var nickWrap = $("#nickWrap");
+			   var regWrap = $("#regWrap");
+               
+               nickForm.click(function(e) {
+                   e.preventDefault();
+				   loginError.hide();
+				   loginIncorrect.hide();
+				   if(nickBox.val() == "" || passBox.val() == "") {
+						alert("Заполните все поля");
+						return;
+				   }
+                   socket.emit('new user', {login: nickBox.val(), pass: passBox.val()}, function(data) {
+                       if(data == 3) {
+                           $('#nickWrap').hide();
+                           $('#contentWrap').show();
+                       } else if(data == 2) {
+							loginIncorrect.show();
+					   }
+					   else if(data == 1) {
+                          loginError.show();
+                       }
+                   });
+               });
+			   
+			   $("#regUser").click(function(e) {
+					e.preventDefault();
+					loginError.hide();
+					loginIncorrect.hide();
+					if($("#regNickname").val() == "" || $("#regPassword").val() == "") {
+						alert("Заполните все поля");
+						return;
+				   }
+					socket.emit('reg user', {login: $("#regNickname").val(), pass: $("#regPassword").val()}, function(data) {
+						if(data == 1)
+							loginError.show();
+						else if(data == 2)
+							$('#regOk').show();
+						else 
+							alert('Что-то пошло не так. Попробуйте снова');
+					});
+			   });
+			   
+			   regLink.click(function(e) {
+					e.preventDefault();
+					regWrap.show();
+					nickWrap.hide();
+			   });
+			   
+			   loginLink.click(function(e) {
+					e.preventDefault();
+					regWrap.hide();
+					nickWrap.show();
+			   });
+               
+               closeAlert.click(function(e) {
+                    $("#login-error").hide();
+               });
+               
+               messageForm.submit(function(e) {
+                   e.preventDefault();
+                   if(messageBox.val()!='') socket.emit('send message', messageBox.val());
+                   messageBox.val('');
+				   passBox.val('');
+               });
+               
+               socket.on('new message', function(data) {
+                  chat.append('<b>'+data.nick+":</b> "+data.msg+"<br/>"); 
+               });
+               
+               socket.on('usernames', function(data) {
+                    var html = '';
+                    for (var username in data) {
+                        html += username + '<br/>';
+                    }
+                    users.html(html);
+                });  
+            });
+            
+        </script>
+    </body>
+</html>
